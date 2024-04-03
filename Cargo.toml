@@ -18,7 +18,7 @@ msl-out = []
 spv-out = []
 
 [dependencies]
-naga = { git = "https://github.com/gfx-rs/naga", branch="master", features=["glsl-in", "glsl-validate", "spv-out", "wgsl-in", "msl-out"] }
+naga = { git = "https://github.com/gfx-rs/naga", branch="master", features=["glsl-in", "spv-out", "wgsl-in", "msl-out"] }
 #naga = { git = "https://github.com/pjoe/naga", branch="glsl-in-glslpp-rs", features=["glsl-in", "glsl-validate", "spv-out", "wgsl-in", "msl-out"] }
 wasm-bindgen = "0.2.67"
 

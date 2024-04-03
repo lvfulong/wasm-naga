@@ -51,16 +51,18 @@ pub fn glsl_in_inner(input: &str, stage: &str) -> Result<usize, String> {
         "compute" => naga::ShaderStage::Compute,
         _ => return Err("stage not supported".into()),
     };
-    let mut entry_points: naga::FastHashMap<String, naga::ShaderStage> = Default::default();
-    entry_points.insert("main".to_string(), shader_stage);
-    let module = naga::front::glsl::parse_str(
-        &input,
-        &naga::front::glsl::Options {
-            defines: Default::default(),
-            entry_points,
-        },
-    )
-    .map_err(|e| format!("{}", e))?;
+
+    let mut parser = naga::front::glsl::Frontend::default(); 
+    let module = parser
+                    .parse(
+                        &naga::front::glsl::Options {
+                            stage: shader_stage,
+                            defines: Default::default(),
+                        },
+                        &input,
+                    ).map_err(|e| format!("{}", "parse error todo"))?;
+
+
     Ok(MODULES.lock().unwrap().append(module))
 }
 
@@ -85,22 +87,23 @@ pub fn msl_out(module: usize) -> Result<String, JsValue> {
 #[cfg(feature = "msl-out")]
 pub fn msl_out_inner(module: usize) -> Result<String, String> {
     utils::set_panic_hook();
+    let pipeline_options = naga::back::msl::PipelineOptions::default();
     match MODULES.lock().unwrap().remove(module) {
         None => Err("module not found".into()),
         Some(module) => {
             use naga::back::msl;
             let options: msl::Options = Default::default();
-            let analysis = naga::valid::Validator::new(naga::valid::ValidationFlags::all())
+            let analysis = naga::valid::Validator::new(naga::valid::ValidationFlags::all(), naga::valid::Capabilities::all())
                 .validate(&module)
                 .map_err(|e| format!("{}", e))?;
             let (str, _) =
-                msl::write_string(&module, &analysis, &options).map_err(|e| format!("{:?}", e))?;
+                msl::write_string(&module, &analysis, &options, &pipeline_options).map_err(|e| format!("{:?}", e))?;
             Ok(str)
         }
     }
 }
 
-#[cfg(feature = "spv-out")]
+/*#[cfg(feature = "spv-out")]
 #[wasm_bindgen]
 pub fn spv_out(module: usize) -> Result<Box<[u8]>, JsValue> {
     spv_out_inner(module).map_err(|e| e.into())
@@ -141,4 +144,4 @@ pub fn spv_out_inner(module: usize) -> Result<Box<[u8]>, String> {
             Ok(bytes.into_boxed_slice())
         }
     }
-}
+}*/
